@@ -1,0 +1,150 @@
+---
+title: Is React a library or framework? What is the difference?
+---
+
+## TL;DR
+
+React is a **library**, not a framework. A library provides tools/functions that you call to solve specific tasks (like React for UI), while a framework dictates the structure of your app and calls your code (like Angular). Libraries give you more freedom and flexibility - you decide how to use them. Frameworks enforce rules and conventions, reducing flexibility but providing more structure.
+
+---
+
+## React: Library vs Framework
+
+### React is a Library
+
+React is a JavaScript **library** for building user interfaces. It provides you with tools and functions to create UI components, but it doesn't dictate how you structure your entire application.
+
+### Key Differences
+
+#### Library Characteristics:
+- **You call the library**: You decide when and how to use the library's functions
+- **More flexibility**: You have control over the application structure
+- **Focused scope**: Libraries typically solve specific problems (React focuses on UI)
+- **Choose your own tools**: You decide on routing, state management, build tools, etc.
+
+#### Framework Characteristics:
+- **Framework calls you**: The framework controls the flow and calls your code
+- **More opinionated**: Frameworks enforce specific patterns and conventions
+- **Complete solution**: Frameworks provide a comprehensive structure for the entire application
+- **Pre-decided architecture**: Routing, state management, and other aspects are pre-built
+
+### React Example (Library)
+
+```javascript
+// You decide how to structure your app
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+// You choose your routing solution
+import { BrowserRouter } from 'react-router-dom';
+
+// You choose your state management
+import { Provider } from 'react-redux';
+
+function App() {
+  return <div>Hello World</div>;
+}
+
+// You control when and how React is used
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);
+```
+
+With React, you need to make decisions about:
+- **Routing**: React Router, Reach Router, or custom solutions
+- **State Management**: Redux, Zustand, Context API, or other solutions
+- **Build Tools**: Webpack, Vite, Create React App, or custom configurations
+- **Styling**: CSS modules, Styled Components, Emotion, or other approaches
+
+### Framework Example (Angular)
+
+```typescript
+// Framework dictates the structure
+@Component({
+  selector: 'app-root',
+  template: '<div>Hello World</div>'
+})
+export class AppComponent {
+  // Framework defines how components work
+}
+
+@NgModule({
+  // Framework defines how modules work
+  declarations: [AppComponent],
+  imports: [BrowserModule],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+Angular provides:
+- **Built-in routing**: Angular Router
+- **Built-in state management**: Services and RxJS
+- **Built-in build tools**: Angular CLI
+- **Built-in styling**: Component styles with ViewEncapsulation
+
+### Practical Implications
+
+#### Using React (Library):
+```javascript
+// You have the freedom to choose
+import React, { useState } from 'react';
+
+// Choose your own component pattern
+function Counter() {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>
+        Increment
+      </button>
+    </div>
+  );
+}
+
+// You decide how to export and use components
+export default Counter;
+```
+
+#### Using Angular (Framework):
+```typescript
+// Framework enforces specific patterns
+@Component({
+  selector: 'app-counter',
+  template: `
+    <div>
+      <p>Count: {{count}}</p>
+      <button (click)="increment()">Increment</button>
+    </div>
+  `
+})
+export class CounterComponent {
+  count = 0;
+  
+  increment() {
+    this.count++;
+  }
+}
+```
+
+### Benefits of React Being a Library
+
+1. **Flexibility**: Choose the best tools for your specific needs
+2. **Learning curve**: Can start small and gradually add complexity
+3. **Bundle size**: Include only what you need
+4. **Ecosystem**: Rich ecosystem of third-party solutions
+5. **Migration**: Easier to integrate into existing projects
+
+### When Frameworks Might Be Better
+
+1. **Team consistency**: Everyone follows the same patterns
+2. **Rapid development**: Less decision fatigue, faster setup
+3. **Large teams**: Enforced conventions help maintain code quality
+4. **Enterprise applications**: Built-in solutions for common enterprise needs
+
+### Summary
+
+React's library nature means you have more control and flexibility, but also more responsibility for architectural decisions. This makes React suitable for projects where you want to customize your stack, while frameworks like Angular are better when you want a complete, opinionated solution out of the box.

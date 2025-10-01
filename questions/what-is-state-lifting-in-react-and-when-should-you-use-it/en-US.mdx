@@ -1,0 +1,245 @@
+---
+title: What is state lifting in React and when should you use it?
+---
+
+## TL;DR
+
+State lifting is the process of moving state from a child component to a parent component to share data between sibling components. You lift state up to the nearest common ancestor when multiple components need to access or modify the same data. The parent holds the state and passes it down as props, along with functions to update the state, ensuring all components stay in sync.
+
+---
+
+## What is State Lifting in React?
+
+State lifting is a pattern in React where you move state from a child component up to a parent component. This allows you to share state between multiple components that need access to the same data.
+
+### Why Do We Need State Lifting?
+
+We use state lifting primarily for one reason: **to share state between components**.
+
+Imagine two sibling components that need to be in sync. If the state (the data) lives inside one of them, the other sibling has no way to read or change it.
+
+By "lifting the state up" to their common parent, the parent becomes the single source of truth:
+- The parent holds the state and the logic to change it
+- It passes the state down to children as props for them to display
+- It passes functions to change the state down to children (also as props), allowing them to request updates
+
+This ensures that whenever the data changes, all components relying on that data are updated consistently.
+
+### Basic Example
+
+Here's a practical example of state lifting with two input components that need to stay synchronized:
+
+```javascript
+import React, { useState } from "react";
+
+export default function App() {
+    // State is lifted up to the parent component
+    const [text, setText] = useState('');
+
+    function handleInputChange(event) {
+        setText(event.target.value);
+    }
+
+    return (
+        <div>
+            <label>Input 1: </label>
+            <MyInput 
+                valueToShow={text}
+                onType={handleInputChange}
+            />
+            <br/><br/>
+            <label>Input 2: </label>
+            <MyInput 
+                valueToShow={text}
+                onType={handleInputChange}
+            />        
+        </div>
+    );
+}
+
+function MyInput({ onType, valueToShow }) {
+    return (
+        <input
+            value={valueToShow}
+            onChange={onType}
+        />
+    );
+}
+```
+
+### How State Lifting Works
+
+1. **Identify the common parent**: Find the nearest component that contains all components needing the shared state
+2. **Move state up**: Remove state from child components and place it in the parent
+3. **Pass state down**: Send the state values to children via props
+4. **Pass updaters down**: Send state update functions to children via props
+5. **Update through callbacks**: Children call the parent's update functions to modify state
+
+### When Should You Use State Lifting?
+
+#### ✅ Use State Lifting When:
+
+1. **Sibling components need the same data**
+   ```javascript
+   // Both UserProfile and UserSettings need user data
+   function App() {
+     const [user, setUser] = useState(null);
+     
+     return (
+       <div>
+         <UserProfile user={user} />
+         <UserSettings user={user} onUserUpdate={setUser} />
+       </div>
+     );
+   }
+   ```
+
+2. **Components need to stay synchronized**
+   ```javascript
+   // Shopping cart count and cart items must stay in sync
+   function App() {
+     const [cartItems, setCartItems] = useState([]);
+     
+     return (
+       <div>
+         <Header cartCount={cartItems.length} />
+         <ProductList onAddToCart={(item) => setCartItems([...cartItems, item])} />
+         <Cart items={cartItems} onRemoveItem={removeItem} />
+       </div>
+     );
+   }
+   ```
+
+3. **Parent needs to coordinate between children**
+   ```javascript
+   // Form validation across multiple form sections
+   function RegistrationForm() {
+     const [isValid, setIsValid] = useState(false);
+     const [errors, setErrors] = useState({});
+     
+     return (
+       <form>
+         <PersonalInfo onValidationChange={updateValidation} />
+         <ContactInfo onValidationChange={updateValidation} />
+         <SubmitButton disabled={!isValid} />
+       </form>
+     );
+   }
+   ```
+
+### Advanced Example: Multi-Component State Sharing
+
+```javascript
+import React, { useState } from 'react';
+
+function ShoppingApp() {
+  // Lifted state for the entire shopping experience
+  const [products] = useState([
+    { id: 1, name: 'Laptop', price: 999 },
+    { id: 2, name: 'Phone', price: 599 },
+    { id: 3, name: 'Headphones', price: 199 }
+  ]);
+  
+  const [cart, setCart] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  const addToCart = (product) => {
+    setCart(prevCart => [...prevCart, product]);
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+  };
+
+  const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
+
+  return (
+    <div>
+      {/* Header shows cart count - needs cart state */}
+      <Header cartCount={cart.length} totalPrice={totalPrice} />
+      
+      {/* Filter affects product display */}
+      <CategoryFilter 
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
+      
+      {/* Product list needs to add to cart */}
+      <ProductList 
+        products={products}
+        selectedCategory={selectedCategory}
+        onAddToCart={addToCart}
+      />
+      
+      {/* Cart needs cart items and removal capability */}
+      <Cart 
+        items={cart}
+        onRemoveFromCart={removeFromCart}
+        totalPrice={totalPrice}
+      />
+    </div>
+  );
+}
+
+function Header({ cartCount, totalPrice }) {
+  return (
+    <header>
+      <h1>Shopping App</h1>
+      <div>Cart: {cartCount} items (${totalPrice})</div>
+    </header>
+  );
+}
+
+function ProductList({ products, selectedCategory, onAddToCart }) {
+  const filteredProducts = selectedCategory === 'all' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
+
+  return (
+    <div>
+      {filteredProducts.map(product => (
+        <div key={product.id}>
+          <span>{product.name} - ${product.price}</span>
+          <button onClick={() => onAddToCart(product)}>
+            Add to Cart
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Cart({ items, onRemoveFromCart, totalPrice }) {
+  return (
+    <div>
+      <h3>Shopping Cart</h3>
+      {items.map(item => (
+        <div key={item.id}>
+          <span>{item.name} - ${item.price}</span>
+          <button onClick={() => onRemoveFromCart(item.id)}>
+            Remove
+          </button>
+        </div>
+      ))}
+      <div><strong>Total: ${totalPrice}</strong></div>
+    </div>
+  );
+}
+```
+
+### Alternatives to State Lifting
+
+When state lifting becomes cumbersome (too many levels of props drilling), consider:
+
+1. **React Context**: For global or widely-used state
+2. **State Management Libraries**: Redux, Zustand, or Recoil for complex state
+3. **Custom Hooks**: For reusable stateful logic
+
+### Best Practices
+
+1. **Lift state only as high as needed**: Don't lift state higher than the nearest common ancestor
+2. **Keep state close to where it's used**: Avoid unnecessary prop drilling
+3. **Use meaningful prop names**: Make it clear what data and functions do
+4. **Consider performance**: Lifting state too high can cause unnecessary re-renders
+
+State lifting is the standard React way to make sibling components communicate with each other and is fundamental to understanding React's data flow patterns.

@@ -4,15 +4,23 @@ title: What does the dependency array of `useEffect` affect?
 
 ## TL;DR
 
-The dependency array of `useEffect` determines when the effect should re-run. If the array is empty, the effect runs only once after the initial render. If it contains variables, the effect runs whenever any of those variables change. If omitted, the effect runs after every render.
+The dependency array of `useEffect` determines when the effect should re-run. **useEffect is called after the component mounts** - it does not run before mounting. If the array is empty `[]`, it runs only once after initial mount. If it contains variables, it runs after every render where those variables change. If omitted, it runs after every render. The cleanup function runs before the effect is re-executed or when the component unmounts.
 
 ---
 
-## What does the dependency array of `useEffect` affect?
+## Understanding useEffect Hook and Dependency Array
 
-### Introduction to `useEffect`
+### What is useEffect?
 
-The `useEffect` hook in React is used to perform side effects in functional components. These side effects can include data fetching, subscriptions, or manually changing the DOM. The `useEffect` hook takes two arguments: a function that contains the side effect logic and an optional dependency array.
+The `useEffect` hook is React's way to handle side effects in functional components. It allows you to perform tasks like data fetching, subscriptions, timers, or DOM manipulation after the component renders.
+
+**Key behavior points:**
+- **useEffect is called AFTER the component mounts**: It does not run before mounting
+- **It runs after every render**: If you do not provide a dependency array, it will run after every render
+- **It can run only once**: If you provide an empty dependency array, it will run only once after the initial mount
+- **Cleanup**: The cleanup function runs before the effect is re-executed or when the component unmounts
+
+This behavior allows you to manage side effects effectively in your React components, ensuring that they run at the appropriate times in the component lifecycle.
 
 ### Dependency array
 

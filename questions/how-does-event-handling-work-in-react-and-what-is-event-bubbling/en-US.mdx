@@ -1,0 +1,341 @@
+---
+title: How does event handling work in React and what is event bubbling?
+---
+
+## TL;DR
+
+Event handling in React uses camelCase event props like `onClick`, `onMouseOver`, etc. You pass function references, not function calls. Event bubbling is when events propagate from child to parent elements automatically. You can prevent bubbling using `e.stopPropagation()`. For inline functions, use arrow functions like `onClick={() => alert('clicked')}` to avoid immediate execution.
+
+---
+
+## Event Handling in React
+
+React provides a synthetic event system that wraps native DOM events to provide consistent behavior across browsers. Event handlers are passed as props to JSX elements using camelCase naming.
+
+### Basic Event Handling
+
+```javascript
+import React from "react";
+
+function App() {
+  function handleClick() {
+    alert("You clicked me!");
+  }
+  
+  function handleMouseOver() {
+    alert("Why are you here!");
+  }
+
+  return (
+    <div>
+      <p 
+        onMouseMove={handleMouseOver} 
+        style={{border: "1px solid black"}}
+      >
+        Hover over me
+      </p>
+      <button onClick={handleClick}>
+        <h1>Click Me</h1>
+      </button>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### Important Rules for Event Handlers
+
+#### ✅ Correct Way - Pass Function Reference
+```javascript
+<button onClick={handleClick}>Click Me</button>
+```
+
+#### ❌ Wrong Way - Function Call (Immediate Execution)
+```javascript
+<button onClick={handleClick()}>Click Me</button>
+// This calls the function immediately when rendering!
+```
+
+#### ✅ Inline Arrow Functions
+```javascript
+<button onClick={() => alert("Button clicked!")}>
+  Click Me
+</button>
+
+// Or with parameters
+<button onClick={() => handleClick('some data')}>
+  Click Me
+</button>
+```
+
+### Event Object
+
+React provides a SyntheticEvent object that wraps the native event:
+
+```javascript
+function handleClick(event) {
+  console.log('Event type:', event.type);
+  console.log('Target element:', event.target);
+  console.log('Current target:', event.currentTarget);
+  
+  // Prevent default behavior
+  event.preventDefault();
+  
+  // Stop event bubbling
+  event.stopPropagation();
+}
+
+<button onClick={handleClick}>Click Me</button>
+```
+
+### Passing Parameters to Event Handlers
+
+```javascript
+function App() {
+  const handleButtonClick = (message, event) => {
+    alert(message);
+    console.log('Event:', event);
+  };
+
+  return (
+    <div>
+      {/* Method 1: Arrow function */}
+      <button onClick={(e) => handleButtonClick('Hello!', e)}>
+        Say Hello
+      </button>
+      
+      {/* Method 2: Bind method (less common) */}
+      <button onClick={handleButtonClick.bind(null, 'Goodbye!')}>
+        Say Goodbye
+      </button>
+    </div>
+  );
+}
+```
+
+## Event Bubbling in React
+
+Event bubbling is a DOM behavior where events propagate from the target element up through its parent elements in the DOM tree.
+
+### How Event Bubbling Works
+
+When you click on a child element, the event "bubbles up" through all its parent elements:
+
+```javascript
+export default function App() {
+  return (
+    <div
+      onClick={() => console.log("Div clicked")}
+      style={{ padding: 20, background: "lightblue" }}
+    >
+      <button onClick={() => console.log("Button clicked")}>
+        Click Me
+      </button>
+    </div>
+  );
+}
+
+// When you click the button, you'll see:
+// "Button clicked"
+// "Div clicked"
+```
+
+### Event Bubbling Order
+
+1. **Target Phase**: Event fires on the clicked element
+2. **Bubbling Phase**: Event bubbles up through parent elements
+3. **Document**: Eventually reaches the document root
+
+```javascript
+function App() {
+  return (
+    <div 
+      onClick={() => console.log("1. Outer div")}
+      style={{ padding: 40, background: "red" }}
+    >
+      <div 
+        onClick={() => console.log("2. Middle div")}
+        style={{ padding: 20, background: "green" }}
+      >
+        <button onClick={() => console.log("3. Button")}>
+          Click Me
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Clicking the button logs:
+// "3. Button"
+// "2. Middle div" 
+// "1. Outer div"
+```
+
+### Preventing Event Bubbling
+
+Use `event.stopPropagation()` to prevent the event from bubbling up:
+
+```javascript
+export default function App() {
+  return (
+    <div
+      onClick={() => console.log("Div clicked")}
+      style={{ padding: 20, background: "lightblue" }}
+    >
+      <button 
+        onClick={(e) => {
+          e.stopPropagation(); // Prevents bubbling to parent div
+          console.log("Button clicked");
+        }}
+      >
+        Click Me
+      </button>
+    </div>
+  );
+}
+
+// Now only "Button clicked" is logged
+```
+
+### Real-World Example: Modal with Backdrop
+
+A common use case is closing a modal when clicking outside it:
+
+```javascript
+function Modal({ isOpen, onClose, children }) {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="modal-backdrop"
+      onClick={onClose} // Close when clicking backdrop
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}
+    >
+      <div 
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking modal content
+        style={{
+          backgroundColor: 'white',
+          padding: '20px',
+          borderRadius: '8px'
+        }}
+      >
+        {children}
+        <button onClick={onClose}>Close</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  return (
+    <div>
+      <button onClick={() => setIsModalOpen(true)}>
+        Open Modal
+      </button>
+      
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <h2>Modal Content</h2>
+        <p>Click outside to close, or use the close button.</p>
+      </Modal>
+    </div>
+  );
+}
+```
+
+### Event Delegation in React
+
+React uses event delegation automatically. All events are attached to the document root and React determines which component should handle the event:
+
+```javascript
+// React automatically handles event delegation
+function TodoList({ todos, onToggle }) {
+  return (
+    <ul>
+      {todos.map(todo => (
+        <li 
+          key={todo.id}
+          onClick={() => onToggle(todo.id)} // Each item has its own handler
+        >
+          {todo.text}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Common Event Types in React
+
+```javascript
+function EventExamples() {
+  return (
+    <div>
+      {/* Mouse Events */}
+      <button onClick={handleClick}>Click</button>
+      <div onMouseEnter={handleMouseEnter}>Mouse Enter</div>
+      <div onMouseLeave={handleMouseLeave}>Mouse Leave</div>
+      
+      {/* Keyboard Events */}
+      <input onKeyDown={handleKeyDown} />
+      <input onKeyUp={handleKeyUp} />
+      <input onKeyPress={handleKeyPress} />
+      
+      {/* Form Events */}
+      <form onSubmit={handleSubmit}>
+        <input onChange={handleChange} />
+        <input onFocus={handleFocus} />
+        <input onBlur={handleBlur} />
+      </form>
+      
+      {/* Touch Events (for mobile) */}
+      <div onTouchStart={handleTouchStart}>Touch me</div>
+    </div>
+  );
+}
+```
+
+### Best Practices for Event Handling
+
+1. **Use arrow functions for inline handlers with parameters**:
+   ```javascript
+   <button onClick={() => handleClick(data)}>Click</button>
+   ```
+
+2. **Extract complex event handlers**:
+   ```javascript
+   // Instead of inline complex logic
+   const handleComplexClick = useCallback((event) => {
+     // Complex logic here
+   }, [dependencies]);
+   ```
+
+3. **Prevent unnecessary re-renders** with useCallback:
+   ```javascript
+   const handleClick = useCallback(() => {
+     // Handler logic
+   }, [dependencies]);
+   ```
+
+4. **Use event.preventDefault() for form handling**:
+   ```javascript
+   const handleSubmit = (event) => {
+     event.preventDefault();
+     // Handle form submission
+   };
+   ```
+
+Understanding event handling and bubbling is crucial for building interactive React applications and handling complex user interactions properly.
