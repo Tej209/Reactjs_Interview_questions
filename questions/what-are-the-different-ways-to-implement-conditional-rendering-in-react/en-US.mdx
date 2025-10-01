@@ -1,0 +1,399 @@
+---
+title: What are the different ways to implement conditional rendering in React?
+---
+
+## TL;DR
+
+React offers several ways to conditionally render components: **If-Else statements** (outside JSX), **Ternary operators** (`condition ? <A/> : <B/>`), **Logical AND operator** (`condition && <Component/>`), and **Early return** (return early from component function). Each method has its use cases - ternary for simple either/or, logical AND for show/hide, and early return for complex conditions.
+
+---
+
+## Conditional Rendering in React
+
+Conditional rendering in React allows you to render different components or elements based on certain conditions. React provides several patterns to achieve this.
+
+## 1. If-Else Statements
+
+Traditional if-else statements work outside of JSX. You cannot use if-else directly inside JSX.
+
+```javascript
+function UserGreeting({ isLoggedIn, username }) {
+  if (isLoggedIn) {
+    return <h1>Welcome back, {username}!</h1>;
+  } else {
+    return <h1>Please sign in.</h1>;
+  }
+}
+
+// Usage
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState('John');
+
+  return (
+    <div>
+      <UserGreeting isLoggedIn={isLoggedIn} username={username} />
+      <button onClick={() => setIsLoggedIn(!isLoggedIn)}>
+        {isLoggedIn ? 'Logout' : 'Login'}
+      </button>
+    </div>
+  );
+}
+```
+
+### Using Variables with If-Else
+
+```javascript
+function Dashboard({ user, isLoading, error }) {
+  let content;
+
+  if (isLoading) {
+    content = <div>Loading...</div>;
+  } else if (error) {
+    content = <div>Error: {error.message}</div>;
+  } else if (user) {
+    content = <div>Welcome, {user.name}!</div>;
+  } else {
+    content = <div>No user data available</div>;
+  }
+
+  return (
+    <div className="dashboard">
+      <h1>Dashboard</h1>
+      {content}
+    </div>
+  );
+}
+```
+
+## 2. Ternary Operator
+
+The ternary operator (`condition ? valueIfTrue : valueIfFalse`) is perfect for either/or scenarios and can be used directly in JSX.
+
+```javascript
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  return (
+    <div>
+      {isLoggedIn ? (
+        <h1>Welcome back!</h1>
+      ) : (
+        <h1>Please log in</h1>
+      )}
+      
+      <button onClick={() => setIsLoggedIn(!isLoggedIn)}>
+        {isLoggedIn ? 'Logout' : 'Login'}
+      </button>
+    </div>
+  );
+}
+```
+
+### Nested Ternary (Use Sparingly)
+
+```javascript
+function StatusIndicator({ status }) {
+  return (
+    <div>
+      Status: {
+        status === 'loading' ? (
+          <span>Loading...</span>
+        ) : status === 'success' ? (
+          <span style={{color: 'green'}}>Success</span>
+        ) : status === 'error' ? (
+          <span style={{color: 'red'}}>Error</span>
+        ) : (
+          <span>Unknown</span>
+        )
+      }
+    </div>
+  );
+}
+
+// Better approach for multiple conditions:
+function StatusIndicator({ status }) {
+  const getStatusDisplay = () => {
+    switch (status) {
+      case 'loading': return <span>Loading...</span>;
+      case 'success': return <span style={{color: 'green'}}>Success</span>;
+      case 'error': return <span style={{color: 'red'}}>Error</span>;
+      default: return <span>Unknown</span>;
+    }
+  };
+
+  return <div>Status: {getStatusDisplay()}</div>;
+}
+```
+
+## 3. Logical AND Operator (&&)
+
+The logical AND operator is perfect for show/hide scenarios. It renders the component only if the condition is true.
+
+```javascript
+function App() {
+  const [showMessage, setShowMessage] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(true);
+  const [messages, setMessages] = useState(['Hello', 'World']);
+
+  return (
+    <div>
+      <button onClick={() => setShowMessage(!showMessage)}>
+        Toggle Message
+      </button>
+      
+      {/* Simple show/hide */}
+      {showMessage && <p>This message is conditionally rendered!</p>}
+      
+      {/* Show notification badge */}
+      {hasNotifications && (
+        <div className="notification-badge">
+          You have new notifications!
+        </div>
+      )}
+      
+      {/* Show list only if it has items */}
+      {messages.length > 0 && (
+        <ul>
+          {messages.map((msg, index) => (
+            <li key={index}>{msg}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+```
+
+### Common Pitfall with Logical AND
+
+Be careful with falsy values that might render unexpectedly:
+
+```javascript
+function App() {
+  const [count, setCount] = useState(0);
+  const [items, setItems] = useState([]);
+
+  return (
+    <div>
+      {/* ❌ This will render "0" when count is 0 */}
+      {count && <p>Count: {count}</p>}
+      
+      {/* ✅ Better approach */}
+      {count > 0 && <p>Count: {count}</p>}
+      
+      {/* ❌ This might render "0" if items.length is 0 */}
+      {items.length && <p>You have items!</p>}
+      
+      {/* ✅ Better approach */}
+      {items.length > 0 && <p>You have items!</p>}
+    </div>
+  );
+}
+```
+
+## 4. Early Return
+
+Early return is excellent for handling complex conditions and keeping your main JSX clean.
+
+```javascript
+function UserProfile({ user, isLoading, error }) {
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Oops! Something went wrong</h2>
+        <p>{error.message}</p>
+        <button onClick={() => window.location.reload()}>
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  // Handle no user data
+  if (!user) {
+    return (
+      <div className="no-user-container">
+        <h2>No user found</h2>
+        <p>Please check the user ID and try again.</p>
+      </div>
+    );
+  }
+
+  // Main render - only executes if user exists and no loading/error
+  return (
+    <div className="user-profile">
+      <img src={user.avatar} alt={`${user.name}'s avatar`} />
+      <h1>{user.name}</h1>
+      <p>{user.email}</p>
+      <p>Member since: {user.joinDate}</p>
+    </div>
+  );
+}
+```
+
+## 5. Switch Statements
+
+For multiple conditions, you can use switch statements in a function:
+
+```javascript
+function StatusIcon({ status }) {
+  const renderIcon = () => {
+    switch (status) {
+      case 'pending':
+        return <span>⏳</span>;
+      case 'approved':
+        return <span>✅</span>;
+      case 'rejected':
+        return <span>❌</span>;
+      case 'cancelled':
+        return <span>🚫</span>;
+      default:
+        return <span>❓</span>;
+    }
+  };
+
+  return (
+    <div className="status-icon">
+      {renderIcon()}
+    </div>
+  );
+}
+```
+
+## 6. Immediately Invoked Function Expression (IIFE)
+
+You can use IIFE for complex logic directly in JSX:
+
+```javascript
+function ComplexConditional({ user, permissions, feature }) {
+  return (
+    <div>
+      {(() => {
+        if (!user) {
+          return <LoginPrompt />;
+        }
+        
+        if (!permissions.includes('read')) {
+          return <AccessDenied />;
+        }
+        
+        if (!feature.enabled) {
+          return <FeatureDisabled />;
+        }
+        
+        return <MainContent user={user} />;
+      })()}
+    </div>
+  );
+}
+```
+
+## Real-World Example: Complete Component
+
+Here's a comprehensive example using multiple conditional rendering techniques:
+
+```javascript
+import React, { useState, useEffect } from 'react';
+
+function ProductCard({ productId }) {
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [inCart, setInCart] = useState(false);
+
+  useEffect(() => {
+    fetchProduct(productId)
+      .then(setProduct)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [productId]);
+
+  // Early return for loading
+  if (loading) {
+    return <div className="product-card loading">Loading product...</div>;
+  }
+
+  // Early return for error
+  if (error) {
+    return (
+      <div className="product-card error">
+        <h3>Failed to load product</h3>
+        <p>{error.message}</p>
+      </div>
+    );
+  }
+
+  // Early return for no product
+  if (!product) {
+    return <div className="product-card">Product not found</div>;
+  }
+
+  return (
+    <div className="product-card">
+      <img src={product.image} alt={product.name} />
+      
+      <h3>{product.name}</h3>
+      
+      <p className="price">
+        {/* Ternary for pricing display */}
+        {product.onSale ? (
+          <>
+            <span className="original-price">${product.originalPrice}</span>
+            <span className="sale-price">${product.salePrice}</span>
+          </>
+        ) : (
+          <span>${product.price}</span>
+        )}
+      </p>
+
+      {/* Logical AND for sale badge */}
+      {product.onSale && <div className="sale-badge">SALE!</div>}
+
+      {/* Logical AND for low stock warning */}
+      {product.stock < 5 && product.stock > 0 && (
+        <div className="low-stock">Only {product.stock} left!</div>
+      )}
+
+      {/* Complex condition with ternary */}
+      <button 
+        onClick={() => setInCart(!inCart)}
+        disabled={product.stock === 0}
+      >
+        {product.stock === 0 ? (
+          'Out of Stock'
+        ) : inCart ? (
+          'Remove from Cart'
+        ) : (
+          'Add to Cart'
+        )}
+      </button>
+
+      {/* Logical AND for additional info */}
+      {product.freeShipping && (
+        <div className="free-shipping">Free shipping!</div>
+      )}
+    </div>
+  );
+}
+```
+
+## When to Use Each Method
+
+- **If-Else**: Complex conditions, multiple statements, outside JSX
+- **Ternary Operator**: Simple either/or choices, inline in JSX
+- **Logical AND (&&)**: Show/hide scenarios, optional elements
+- **Early Return**: Loading states, error handling, guard clauses
+- **Switch/Functions**: Multiple discrete options
+
+Choose the method that makes your code most readable and maintainable for your specific use case.

@@ -1,0 +1,4 @@
+{
+  "title": "How does event handling work in React and what is event bubbling?",
+  "description": "Comprehensive guide to React event handling, synthetic events, event bubbling, and how to prevent propagation with practical examples."
+}

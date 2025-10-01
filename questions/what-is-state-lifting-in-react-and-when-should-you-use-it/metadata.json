@@ -1,0 +1,4 @@
+{
+  "title": "What is state lifting in React and when should you use it?",
+  "description": "Understanding state lifting pattern in React - moving state from child to parent components to share data between siblings, with practical examples and best practices."
+}
